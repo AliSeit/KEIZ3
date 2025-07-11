@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Социальная сеть</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .hidden { display: none; }
+        .post { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Социальная сеть</h1>
+
+    <div>
+        <h2>Регистрация / Вход</h2>
+        <input type="text" id="username" placeholder="Имя пользователя">
+        <button id="login">Войти / Зарегистрироваться</button>
+    </div>
+
+    <div class="hidden" id="postSection">
+        <h2>Создать пост</h2>
+        <textarea id="postContent" placeholder="Ваш пост"></textarea>
+        <input type="text" id="postTags" placeholder="Теги (через запятую)">
+        <button id="createPost">Создать пост</button>
+    </div>
+
+    <div>
+        <h2>Посты</h2>
+        <div id="postList"></div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let posts = [];
+
+        document.getElementById('login').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            if (username) {
+                currentUser = username;
+                document.getElementById('postSection').classList.remove('hidden');
+                document.getElementById('login').innerText = 'Вы вошли как ' + currentUser;
+            }
+        });
+
+        document.getElementById('createPost').addEventListener('click', () => {
+            const content = document.getElementById('postContent').value;
+            const tags = document.getElementById('postTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+            const post = {
+                id: Date.now(),
+                user: currentUser,
+                content,
+                tags,
+                comments: [],
+                isHidden: false
+            };
+            posts.push(post);
+            renderPosts();
+            document.getElementById('postContent').value = '';
+            document.getElementById('postTags').value = '';
+        });
+
+        function renderPosts() {
+            const postList = document.getElementById('postList');
+            postList.innerHTML = '';
+            posts.forEach(post => {
+                if (!post.isHidden) {
+                    const postDiv = document.createElement('div');
+                    postDiv.classList.add('post');
+                    postDiv.innerHTML = `
+                        <strong>${post.user}</strong>: ${post.content} <br>
+                        <small>Теги: ${post.tags.join(', ')}</small>
+                        <button onclick="editPost(${post.id})">Редактировать</button>
+                        <button onclick="deletePost(${post.id})">Удалить</button>
+                        <button onclick="toggleHidden(${post.id})">${post.isHidden ? 'Показать' : 'Скрыть'}</button>
+                        <h4>Комментарии</h4>
+                        <div id="comments-${post.id}"></div>
+                        <input type="text" id="commentInput-${post.id}" placeholder="Ваш комментарий">
+                        <button onclick="addComment(${post.id})">Добавить комментарий</button>
+                    `;
+                    postList.appendChild(postDiv);
+                    post.comments.forEach(comment => {
+                        const commentDiv = document.createElement('div');
+                        commentDiv.innerText = comment;
+                        document.getElementById(`comments-${post.id}`).appendChild(commentDiv);
+                    });
+                }
+            });
+        }
+
+        function editPost(postId) {
+            const post = posts.find(p => p.id === postId);
+            document.getElementById('postContent').value = post.content;
+            document.getElementById('postTags').value = post.tags.join(', ');
+            deletePost(postId);
+        }
+
+        function deletePost(postId) {
+            posts = posts.filter(p => p.id !== postId);
+            renderPosts();
+        }
+
+        function toggleHidden(postId) {
+            const post = posts.find(p => p.id === postId);
+            post.isHidden = !post.isHidden;
+            renderPosts();
+        }
+
+        function addComment(postId) {
+            const commentInput = document.getElementById(`commentInput-${postId}`);
+            const comment = commentInput.value;
+            if (comment) {
+                const post = posts.find(p => p.id === postId);
+                post.comments.push(comment);
+                commentInput.value = '';
+                renderPosts();
+            }
+        }
+    </script>
+</body>
+</html>
+
